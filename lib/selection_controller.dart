@@ -1,8 +1,13 @@
 import 'dart:collection';
 
 enum SelectionMode {
+  /// Allow multiple selection.
   multiple,
+
+  /// Allow multiple options to be selected but must be within the same group.
   sameGroup,
+
+  /// Only allow maximum 1 options selected.
   single,
 }
 
@@ -28,37 +33,24 @@ class SelectionController<T> {
   /// Selector runtime mode.
   final SelectionMode mode;
 
-  /// Initiate a [SelectionController].
-  ///
-  /// This selector will allow you to choose options<[T]> on [choosableOptions].
-  ///
-  /// Each [T] must somehow can be identified uniqly as a [String] (index).
+  /// Each [selectableOptions] must somehow can be identified uniquely in [String].
   /// Specify how that identification is done on [indexGetter].
   ///
-  /// Use [initialSelected] to define pre-selected index.
-  ///
-  /// You can also groups options<[T]> by some [String] identification (like index)
-  /// which you can specify on [groupNameGetter].
-  ///
-  /// [mode] can be:
-  /// - [SelectionMode.multiple] (default)
-  /// - [SelectorMode.sameGroup]: allow selection on multiple options but must be on the same group.
-  /// Selected options on other group will be unselected when you select an option on not currently selected group.
-  /// - [SelectorMode.single]: only allow 1 option to be selected.
+  /// You can groups options ([selectableOptions]'s elements) by some [String] identification (like index) which you can specify on [groupNameGetter].
   SelectionController({
     required this.indexGetter,
-    required Iterable<T> choosableOptions,
+    required Iterable<T> selectableOptions,
     String Function(T)? groupNameGetter,
-    Iterable<String>? initialSelected,
+    Iterable<String>? initiallySelected,
     this.mode = SelectionMode.multiple,
   }) {
     assert(T is! String);
 
     // fill default
     this.groupNameGetter = groupNameGetter ?? (t) => 'noGroup';
-    _selected = Set.from(initialSelected ?? <String>[]);
+    _selected = Set.from(initiallySelected ?? <String>[]);
 
-    _init(choosableOptions);
+    _init(selectableOptions);
 
     _originalSelected = Set.from(_constrainedSelected());
     // constraint only done at runtime
@@ -81,20 +73,20 @@ class SelectionController<T> {
   }
 
   /// Return new [SelectionController] initialized with same arguments.
-  /// You can change into [newMode].
+  /// But you can define the [newMode] for the new [SelectionController].
   SelectionController<T> clone({SelectionMode? newMode}) {
     SelectionController<T> a = SelectionController(
       indexGetter: indexGetter,
-      choosableOptions: _options.values,
+      selectableOptions: _options.values,
       groupNameGetter: groupNameGetter,
-      initialSelected: _constrainedSelected(forceMode: newMode),
+      initiallySelected: _constrainedSelected(forceMode: newMode),
       mode: newMode ?? mode,
     );
     return a;
   }
 
   /// If currently all options are selected ([isAllSelected] returns true),
-  /// that state will be preserved. If not, what currently selected will stay the same.
+  /// that state will be preserved. If not, what options are currently selected will stay the same.
   void updateOptions(Iterable<T> choosableOptions) {
     if (isAllSelected) {
       _selected = Set.from(choosableOptions.map(indexGetter));
@@ -220,10 +212,9 @@ class SelectionController<T> {
     return _constrainedSelected().map((k) => _options[k]!).toSet();
   }
 
-  /// Check if there any changes in selection.
+  /// Check if there are any changes in selection.
   ///
-  /// Compare [_originalSelected] with [_constrainedSelected].
-  /// Based on length and two way containsAll check.
+  /// Comparing using length and two way containsAll check.
   bool isChanged() {
     if (_originalSelected.length != _constrainedSelected().length) return true;
     if (!_originalSelected.containsAll(_constrainedSelected())) return true;
@@ -234,7 +225,7 @@ class SelectionController<T> {
 
   /// Select all options in a group (defined by [groupName]).
   ///
-  /// Wont work when [mode] is [SelectionMode.single].
+  /// Do nothing when [mode] is [SelectionMode.single].
   void selectGroup(String groupName) {
     if (mode == SelectionMode.single) return;
     if (mode == SelectionMode.sameGroup) _selected.clear();
