@@ -23,7 +23,7 @@ class User {
 }
 ```
 
-And you have some `User`s as an option:
+And you have some `User`s as options:
 ```dart
 List<User> users = [
 	User(id: 'u0', name: 'James', age: 24), // adult
@@ -76,7 +76,7 @@ If you only allow 1 user to be selected at a time:
 SelectionController<User> selection = SelectionController(
 	choosableOptions: users,
 	indexGetter: (user) => user.id,
-	mode: SelectorMode.single, // apply constraint that only allow 1 option selected at a time.
+	mode: SelectionMode.single, // apply constraint that only allow 1 option selected at a time.
 );
 
 selection.select('u0'); // select James
@@ -100,7 +100,7 @@ SelectionController<User> selection = SelectionController(
 	choosableOptions: users,
 	indexGetter: (user) => user.id,
 	groupNameGetter: (user) => user.ageGroup, // to generate group name from each options (users)
-	mode: SelectorMode.sameGroup, // apply constraint that only allow selected options to be on a same group (same age group in this case).
+	mode: SelectionMode.sameGroup, // apply constraint that only allow selected options to be on a same group (same age group in this case).
 );
 
 selection.select('u0'); // select James
@@ -165,4 +165,4 @@ selection.isGroupSelected('adult'); // false
 selection.isGroupSelectedAll('adult'); // false
 ```
 
-Additional methods: see documentation.
+Additional methods: see [API documentation](https://pub.dev/documentation/selection_controller/latest/selection_controller/SelectionController-class.html).
