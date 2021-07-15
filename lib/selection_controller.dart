@@ -1,12 +1,12 @@
 import 'dart:collection';
 
-enum SelectorMode {
+enum SelectionMode {
   multiple,
   sameGroup,
   single,
 }
 
-class Selector<T> {
+class SelectionController<T> {
   /// To translate [T] into index in [String].
   String Function(T) indexGetter;
 
@@ -26,9 +26,9 @@ class Selector<T> {
   late final Set<String> _originalSelected;
 
   /// Selector runtime mode.
-  final SelectorMode mode;
+  final SelectionMode mode;
 
-  /// Initiate a [Selector].
+  /// Initiate a [SelectionController].
   ///
   /// This selector will allow you to choose options<[T]> on [choosableOptions].
   ///
@@ -41,16 +41,16 @@ class Selector<T> {
   /// which you can specify on [groupNameGetter].
   ///
   /// [mode] can be:
-  /// - [SelectorMode.multiple] (default)
+  /// - [SelectionMode.multiple] (default)
   /// - [SelectorMode.sameGroup]: allow selection on multiple options but must be on the same group.
   /// Selected options on other group will be unselected when you select an option on not currently selected group.
   /// - [SelectorMode.single]: only allow 1 option to be selected.
-  Selector({
+  SelectionController({
     required this.indexGetter,
     required Iterable<T> choosableOptions,
     String Function(T)? groupNameGetter,
     Iterable<String>? initialSelected,
-    this.mode = SelectorMode.multiple,
+    this.mode = SelectionMode.multiple,
   }) {
     assert(T is! String);
 
@@ -80,10 +80,10 @@ class Selector<T> {
     );
   }
 
-  /// Return new [Selector] initialized with same arguments.
+  /// Return new [SelectionController] initialized with same arguments.
   /// You can change into [newMode].
-  Selector<T> clone({SelectorMode? newMode}) {
-    Selector<T> a = Selector(
+  SelectionController<T> clone({SelectionMode? newMode}) {
+    SelectionController<T> a = SelectionController(
       indexGetter: indexGetter,
       choosableOptions: _options.values,
       groupNameGetter: groupNameGetter,
@@ -107,16 +107,16 @@ class Selector<T> {
       _options.keys.where((k) => _selected.contains(k));
 
   /// This will return [_sortedSelected] with constraint applied (as described by [mode] or [forceMode] if defined).
-  Iterable<String> _constrainedSelected({SelectorMode? forceMode}) {
+  Iterable<String> _constrainedSelected({SelectionMode? forceMode}) {
     if (isNoneSelected) return [];
 
     forceMode ??= mode;
 
     Iterable<String> selected = _sortedSelected;
-    if (forceMode == SelectorMode.single) {
+    if (forceMode == SelectionMode.single) {
       // only returns first selected
       return [selected.first];
-    } else if (forceMode == SelectorMode.sameGroup) {
+    } else if (forceMode == SelectionMode.sameGroup) {
       // only returns from first group
       String? groupName = _groups[selected.first];
       return selected.where((i) => _groups[i] == groupName);
@@ -131,13 +131,13 @@ class Selector<T> {
   /// Return true if no option selected at all.
   bool get isNoneSelected => _sortedSelected.isEmpty;
 
-  /// Do nothing if [mode] is [SelectorMode.single].
+  /// Do nothing if [mode] is [SelectionMode.single].
   ///
-  /// When [mode] is [SelectorMode.sameGroup], this method will only work when there is only 1 group exists.
+  /// When [mode] is [SelectionMode.sameGroup], this method will only work when there is only 1 group exists.
   /// If there is more than 1 groups, this method will do nothing.
   void selectAll() {
-    if (mode == SelectorMode.single) return;
-    if (mode == SelectorMode.sameGroup && groups.length > 1) return;
+    if (mode == SelectionMode.single) return;
+    if (mode == SelectionMode.sameGroup && groups.length > 1) return;
     _selected = Set.from(_options.keys);
   }
 
@@ -169,15 +169,15 @@ class Selector<T> {
   /// Change the option status to be selected.
   /// Which option to select can be defined by the index ([String]) or by the option ([T]) object itself.
   ///
-  /// Will clear and select [o] when [mode] is [SelectorMode.single].
-  /// When [mode] is [SelectorMode.sameGroup], will clear and select [o] if the group for this [o] is not currently selected.
+  /// Will clear and select [o] when [mode] is [SelectionMode.single].
+  /// When [mode] is [SelectionMode.sameGroup], will clear and select [o] if the group for this [o] is not currently selected.
   void select(dynamic o) {
     assert(o is String || o is T);
     if (o is T) o = indexGetter(o);
 
-    if (mode == SelectorMode.single) {
+    if (mode == SelectionMode.single) {
       _selected = {o};
-    } else if (mode == SelectorMode.sameGroup) {
+    } else if (mode == SelectionMode.sameGroup) {
       if (isGroupSelected(_groups[o])) {
         _selected.add(o);
       } else {
@@ -192,21 +192,21 @@ class Selector<T> {
   /// Change the option status to be unselected.
   /// Which option to unselect can be defined by the index ([String]) or by the option ([T]) object itself.
   ///
-  /// Will do nothing if [mode] is [SelectorMode.single] as you should just select another option when on this [mode].
+  /// Will do nothing if [mode] is [SelectionMode.single] as you should just select another option when on this [mode].
   void unselect(dynamic o) {
     assert(o is String || o is T);
     if (o is T) o = indexGetter(o);
 
-    if (mode == SelectorMode.single) return;
+    if (mode == SelectionMode.single) return;
     _selected.remove(o);
   }
 
   /// Change the option status (depending on [isSelected] result).
   /// Which option to be toggled can be defined by the index ([String]) or by the option ([T]) object itself.
   ///
-  /// On [SelectorMode.single], this will just call [select].
+  /// On [SelectionMode.single], this will just call [select].
   void toggle(dynamic o) {
-    if (mode == SelectorMode.single) {
+    if (mode == SelectionMode.single) {
       select(o);
     } else if (isSelected(o)) {
       unselect(o);
@@ -234,10 +234,10 @@ class Selector<T> {
 
   /// Select all options in a group (defined by [groupName]).
   ///
-  /// Wont work when [mode] is [SelectorMode.single].
+  /// Wont work when [mode] is [SelectionMode.single].
   void selectGroup(String groupName) {
-    if (mode == SelectorMode.single) return;
-    if (mode == SelectorMode.sameGroup) _selected.clear();
+    if (mode == SelectionMode.single) return;
+    if (mode == SelectionMode.sameGroup) _selected.clear();
     _selected.addAll(_groups.keys.where((i) => _groups[i] == groupName));
   }
 
