@@ -1,0 +1,11 @@
+name: selector
+description: Tools to help manage selection state
+version: 0.1.1
+homepage: https://github.com/suryavip/Selector
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dev_dependencies:
+  test: ^1.15.7
+
